@@ -1,0 +1,99 @@
+CREATE DATABASE "U4S3L1"
+    WITH
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    CONNECTION LIMIT = -1
+    IS_TEMPLATE = False;
+    
+    
+CREATE TABLE customers (
+	id int primary key,
+	name varchar(200) not null,
+	surname varchar(200) not null,
+	birthday date,
+	region varchar(200)
+)
+
+
+CREATE TABLE products(
+	id int primary key,
+	description varchar(1000) not null,
+	inProduction boolean not null default true,
+	onMarket boolean not null default false,
+	activationDt date,
+	deactivationDt date
+)
+
+CREATE TABLE suppliers (
+	id int primary key,
+	name varchar(200) not null,
+	region varchar(200)
+)
+    
+CREATE TABLE invoices(
+	id int,
+	codInvoice varchar(50),
+	type varchar(100) not null,
+	amount float not null,
+	iva float not null default 22,
+	customerId int references customers(id),
+	invoiceDt date not null,
+	supplierId int references suppliers(id),
+
+	PRIMARY KEY (id, codInvoice)
+)
+
+select *
+from customers 
+where name = 'Mario';
+
+select name, surname
+from customers 
+where EXTRACT(YEAR FROM birthday) = 1982;
+
+select count(*)
+from invoices
+where iva = 20;
+
+select *
+from products
+where 
+	EXTRACT(YEAR FROM activationDt) = 2017 and
+	(inProduction = true or onMarket = true);
+
+select *
+from invoices i
+join customers c on i.customerId = c.id
+where i.amount < 1000 ;
+
+select i.codInvoice, i.amount, i.iva, i.invoicedt, s.name
+from invoices i
+join suppliers s on i.supplierId = s.id;
+
+select EXTRACT(YEAR FROM invoicedt) as year, count(*) as nr_invoices
+from invoices i 
+where i.iva = 20
+group by EXTRACT(YEAR FROM invoicedt);
+
+select EXTRACT(YEAR FROM invoicedt) as year, count(*) as nr_invoices, sum(i.amount) as tot_amount
+from invoices i 
+group by EXTRACT(YEAR FROM invoicedt);
+
+
+select EXTRACT(YEAR FROM i.invoicedt) as year
+from invoices i 
+where i.type = 'A'
+group by EXTRACT(YEAR FROM i.invoicedt)
+having count(*) > 2; 
+
+select c.name, c.region, sum(i.amount) as tot_amount
+from invoices i 
+join customers c on c.id = i.customerId
+group by c.name, c.region;
+
+select count(*) as nr_of_customers_with_a_invoice_more_then_50
+from customers c 
+join invoices i on i.customerId = c.id
+where EXTRACT(YEAR FROM c.birthday ) = 1980 and i.amount > 50;
+
+    
